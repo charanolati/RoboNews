@@ -36,13 +36,13 @@ class MainAdapter(
     override fun onBindViewHolder(holders: MyViewHolder, position: Int) {
         val model: Article = articles[position]
         Glide.with(context)
-            .load(model.url)
+            .load(model.urlToImage)
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(holders.imageView)
         holders.title.text = model.title
         holders.desc.text = model.description
         // holders.source.text = model.source.name
-//        holders.time.text = " \u2022 " + Utils.DateToTimeFormat(model.publishedAt)
+        holders.time.text = " \u2022 " + Utils.DateToTimeFormat(model.publishedAt)
         holders.published_ad.text = Utils.DateFormat(model.publishedAt)
         holders.author.text = model.author
     }
