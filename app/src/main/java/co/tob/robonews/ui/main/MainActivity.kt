@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,6 +17,7 @@ import co.tob.robonews.di.component.DaggerActivityComponent
 import co.tob.robonews.di.module.ActivityModule
 import co.tob.robonews.model.Article
 import co.tob.robonews.ui.BookMarkActivity
+import co.tob.robonews.ui.NewsDetailActivity
 import co.tob.robonews.ui.SearchActivity
 import co.tob.robonews.ui.base.BaseActivity
 import co.tob.robonews.viewmodels.MainViewModel
@@ -70,13 +72,21 @@ class MainActivity : BaseActivity() {
             adapter = MainAdapter(it!!, this@MainActivity)
             recyclerView.adapter = adapter
             adapter.notifyDataSetChanged()
-            it.forEach { article ->
-                val c = databaseService.getArticleDao().insertNewsArticle(article)
-                Toast.makeText(this, "inserted = " + c, Toast.LENGTH_LONG).show()
-            }
 
+            adapter.setOnItemClickListener(object : MainAdapter.OnItemClickListener {
+                override fun onItemClick(view: View?, position: Int) {
+                    val intent = Intent(this@MainActivity, NewsDetailActivity::class.java)
+                    intent.putExtra("articleID", articles[position].articleId)
+                    intent.putExtra("url", articles[position].url)
+                    intent.putExtra("img", articles[position].urlToImage)
+                    intent.putExtra("title", articles[position].title)
+                    intent.putExtra("date", articles[position].publishedAt)
+                    intent.putExtra("source", articles[position].title)
+                    intent.putExtra("author", articles[position].author)
+                    startActivity(intent)
+                }
+            })
         })
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
