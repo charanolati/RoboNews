@@ -1,0 +1,99 @@
+package co.tob.robonews.ui.main
+
+import android.content.Intent
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import co.tob.robonews.MyApplication
+import co.tob.robonews.R
+import co.tob.robonews.adapter.MainAdapter
+import co.tob.robonews.db.DatabaseService
+import co.tob.robonews.di.component.DaggerActivityComponent
+import co.tob.robonews.di.module.ActivityModule
+import co.tob.robonews.model.Article
+import co.tob.robonews.ui.BookMarkActivity
+import co.tob.robonews.ui.SearchActivity
+import co.tob.robonews.ui.base.BaseActivity
+import co.tob.robonews.viewmodels.MainViewModel
+import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+import javax.inject.Inject
+
+class MainActivity : BaseActivity() {
+
+    @Inject
+    lateinit var viewModel: MainViewModel
+
+    private lateinit var adapter: MainAdapter
+    private var layoutManager: RecyclerView.LayoutManager? = null
+    private var articles: List<Article> = ArrayList()
+
+    @Inject
+    lateinit var databaseService: DatabaseService
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setSupportActionBar(toolbar)
+
+        getDependencies()
+        layoutManager = LinearLayoutManager(this)
+        recyclerView.layoutManager = layoutManager
+        recyclerView.itemAnimator = DefaultItemAnimator()
+        recyclerView.isNestedScrollingEnabled = false
+        observeLiveData()
+    }
+
+    private fun getDependencies() {
+        DaggerActivityComponent
+            .builder()
+            .applicationComponent((application as MyApplication).applicationComponent)
+            .activityModule(ActivityModule(this))
+            .build()
+            .inject(this)
+    }
+
+    override fun provideLayout() = R.layout.activity_main
+
+    private fun observeLiveData() {
+
+        viewModel.newsFailedLiveData.observe(this, {
+            Toast.makeText(this, "failed", Toast.LENGTH_LONG).show()
+        })
+
+        viewModel.newsLiveData.observe(this, {
+            articles = it!!
+            adapter = MainAdapter(it!!, this@MainActivity)
+            recyclerView.adapter = adapter
+            adapter.notifyDataSetChanged()
+            it.forEach { article ->
+                val c = databaseService.getArticleDao().insertNewsArticle(article)
+                Toast.makeText(this, "inserted = " + c, Toast.LENGTH_LONG).show()
+            }
+
+        })
+
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_search -> {
+                startActivity(Intent(this@MainActivity, BookMarkActivity::class.java))
+            }
+            R.id.action_favorite -> {
+                startActivity(Intent(this@MainActivity, SearchActivity::class.java))
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+}
